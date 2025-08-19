@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Algorithms + Generative Divide Art (p5.js)</title>
+    <!-- p5.js CDN（固定バージョン推奨） -->
+    <script src="https://unpkg.com/p5@1.9.4/lib/p5.min.js"></script>
+    <style>
+      :root { color-scheme: light dark; }
+      html, body {
+        margin: 0; padding: 0; height: 100%;
+        background: #0e0e12; color: #e7e7ea; font: 14px/1.6 system-ui, -apple-system, Segoe UI, Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+      }
+      .wrap {
+        max-width: 1100px; margin: 0 auto; padding: 16px;
+      }
+      .head {
+        display: flex; gap: 12px; align-items: baseline; justify-content: space-between; flex-wrap: wrap;
+      }
+      .head h1 { font-size: 18px; margin: 0; }
+      .head .sub { opacity: .7; font-size: 13px; }
+      #canvas-holder {
+        position: relative; margin-top: 12px; border-radius: 12px; overflow: hidden;
+        box-shadow: 0 4px 24px rgba(0,0,0,.35), 0 1px 0 rgba(255,255,255,.05) inset;
+        background: #111214;
+      }
+      .help {
+        margin-top: 10px; font-size: 13px; opacity: .9;
+      }
+      .badge {
+        padding: 2px 8px; border-radius: 999px; background: #2b2f38; color: #cbd5e1; font-size: 12px;
+      }
+      /* iframe 埋め込み時のページスクロール抑止（ホイールがスケッチに届くように） */
+      body.embed { overscroll-behavior: none; }
+    </style>
+  </head>
+  <body class="embed">
+    <div class="wrap">
+      <div class="head">
+        <h1>Algorithms Visualizer + Generative Divide &amp; Conquer Art</h1>
+        <div class="sub">
+          <span class="badge">p5.js</span>
+          <span class="badge">Interactive</span>
+        </div>
+      </div>
+      <div id="canvas-holder" aria-label="p5 canvas will appear here"></div>
+      <div class="help" id="help-text">
+        <strong>Keys:</strong>
+        1=Binary Search / 2=QuickSort / 3=MergeSort* / 4=BFS/DFS(toggle B) /
+        5=Dijkstra* / 6=A** / 7=Kruskal* / 8=KMP* / 9=FFT* / 0=Grad Descent* /
+        L=Life / <strong>D=Generative Divide Art</strong> /
+        H=Help / R=Reset current
+        <br/>
+        <em>*は現在プレースホルダ（構造だけ）。順次追加可能。</em>
+      </div>
+    </div>
+    <script src="./script.js"></script>
+  </body>
+</html>
