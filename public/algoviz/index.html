@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Algorithm Visual Lab — p5.js</title>
+<style>
+  :root{
+    --bg:#06080B; --panel:#0c111a; --ink:#e6edf3; --muted:#91a4b7;
+    --acc:#00D1FF; --acc2:#F72585; --ok:#34EB8F; --warn:#FFD23F;
+  }
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,system-ui,Segoe UI,Helvetica,Arial;}
+  #wrap{position:relative;display:flex;align-items:center;justify-content:center;height:100%;padding:12px;box-sizing:border-box;}
+  canvas{display:block;box-shadow:0 10px 40px rgba(0,0,0,.35);border-radius:16px;}
+  #ui{
+    position:absolute;top:12px;left:12px;display:flex;gap:8px;flex-wrap:wrap;
+    background:linear-gradient(180deg,rgba(12,17,26,.85),rgba(12,17,26,.6));
+    border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(6px);
+    padding:10px 12px;border-radius:14px;align-items:center;
+  }
+  #ui select,#ui button,#ui input[type=range]{
+    background:#0b1220;color:#e8eef7;border:1px solid rgba(255,255,255,.08);
+    border-radius:10px;padding:8px 10px;outline:none
+  }
+  #ui button{cursor:pointer}
+  #legend{position:absolute;bottom:12px;left:12px;font-size:12px;color:var(--muted);background:rgba(0,0,0,.35);padding:8px 10px;border-radius:10px}
+  .tag{display:inline-block;padding:2px 6px;border-radius:999px;margin-right:6px;font-weight:600}
+  .t-visit{background:rgba(0,209,255,.18);color:#9BE8FF;border:1px solid rgba(0,209,255,.3)}
+  .t-done{background:rgba(52,235,143,.18);color:#b6ffd8;border:1px solid rgba(52,235,143,.3)}
+  .t-edge{background:rgba(247,37,133,.18);color:#ffb6db;border:1px solid rgba(247,37,133,.3)}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="ui">
+    <label>Algo&nbsp;
+      <select id="algo">
+        <option value="BSP">BSP (Evolved)</option>
+        <option value="MergeSort">MergeSort</option>
+        <option value="Dijkstra">Dijkstra</option>
+        <option value="Kruskal">Kruskal (MST)</option>
+        <option value="KMP">KMP</option>
+        <option value="FFT">FFT</option>
+        <option value="Life">Game of Life</option>
+      </select>
+    </label>
+    <button id="play">⏸ Pause</button>
+    <button id="reset">↺ Reset</button>
+    <label>Speed
+      <input id="speed" type="range" min="0.2" max="3" step="0.1" value="1" />
+    </label>
+  </div>
+  <div id="legend"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/p5@1.9.3/lib/p5.min.js"></script>
+<script>
+/* =========================== Core App =========================== */
+let W=960,H=720, paused=false, speed=1, sceneName="BSP", scene=null;
+const legends = {
+  "BSP":"黄金比×ノイズの分割/ネオングロー装飾。 [, ] で深さ。",
+  "MergeSort":"配列を再帰分割→マージ。青=比較, ピンク=書込。",
+  "Dijkstra":"最短路探索。水色=探索中, 緑=確定, ピンク=緩和中辺。",
+  "Kruskal":"MST（クラスカル）。ピンク=候補, 緑=採用エッジ。",
+  "KMP":"パターン照合。i=テキスト, j=パターン, π=部分一致表。",
+  "FFT":"Radix-2 FFT。段ごとにバタフライ。バー=スペクトル強度。",
+  "Life":"Conwayのライフゲーム。クリックでセル反転、Rでランダム。"
+};
+function setLegend(name){document.getElementById('legend').innerHTML = legends[name] || "";}
+
+document.getElementById('algo').addEventListener('change', e=>{
+  sceneName = e.target.value; loadScene();
+});
+document.getElementById('play').addEventListener('click', ()=>{
+  paused=!paused; document.getElementById('play').textContent = paused ? "▶ Play" : "⏸ Pause";
+});
+document.getElementById('reset').addEventListener('click', ()=>{ if(scene && scene.reset) scene.reset(); });
+document.getElementById('speed').addEventListener('input', e=>{ speed = parseFloat(e.target.value); });
+
+function setup(){
+  const c = createCanvas(W, H);
+  c.parent(document.getElementById('wrap'));
+  frameRate(60);
+  pixelDensity(1);
+  loadScene();
+}
+
+function windowResized(){
+  // そのまま固定サイズ（iframe側でwidth/height指定を推奨）
+}
+
+function draw(){
+  background("#06080B");
+  setLegend(sceneName);
+  if(!scene) return;
+  const dt = (deltaTime/1000)*speed;
+  if(scene.update && !paused) scene.update(dt);
+  if(scene.draw) scene.draw();
+}
+
+/* =========================== Utils =========================== */
+function neonRect(x,y,w,h,r,col,glow=3){
+  noFill(); blendMode(ADD);
+  for(let i=0;i<glow;i++){
+    const a = map(i,0,glow-1,40,12);
+    stroke(red(col),green(col),blue(col),a);
+    strokeWeight(1.5 + i*0.8);
+    rect(x - i*0.6, y - i*0.6, w + i*1.2, h + i*1.2, r + i);
+  }
+  blendMode(BLEND);
+}
+
+function vignette(){
+  noStroke();
+  for(let i=0;i<6;i++){
+    const pad=8+i*10, a=int(16*(1-i/5));
+    fill(0,a); rect(pad,pad,width-2*pad,height-2*pad,20);
+  }
+}
+
+function pick(arr){ return arr[int(random(arr.length))]; }
+
+/* ========================= Scene Loader ========================= */
+function loadScene(){
+  const factories = {
+    "BSP": sceneBSP,
+    "MergeSort": sceneMergeSort,
+    "Dijkstra": sceneDijkstra,
+    "Kruskal": sceneKruskal,
+    "KMP": sceneKMP,
+    "FFT": sceneFFT,
+    "Life": sceneLife
+  };
+  scene = factories[sceneName] ? factories[sceneName]() : null;
+  if(scene && scene.init) scene.init();
+}
+
+/* ========================== 1) BSP =========================== */
+function sceneBSP(){
+  let maxDepth=10, autoAnim=true, mode=1, seed=1337, jitter=0.06, minSize=18;
+  const palettes = [
+    ["#0F1021","#E0A458","#00D1FF","#F72585","#34EB8F","#FFD23F"],
+    ["#0B0D0F","#86A8E7","#6EDCCF","#E0C3FC","#FFD6A5","#FFADAD"],
+    ["#0A0F14","#2EC4B6","#E71D36","#FF9F1C","#FDE74C","#011627"],
+    ["#070A0E","#14FFEC","#00E5FF","#FFA62B","#FF3C38","#C5FF5A"]
+  ];
+  let pal = pick(palettes);
+
+  function chooseRatio(x,y,vertical){
+    const base=0.618, n=noise(x*0.006+(vertical?1:3), y*0.006+(vertical?5:7), frameCount*0.003);
+    return constrain(base + map(n,0,1,-jitter,jitter), 0.34, 0.66);
+  }
+  function pickColor(depth,x,y){
+    const idx = (depth + floor(noise(x*0.01,y*0.01)*3)) % pal.length;
+    const c = color(pal[(idx+pal.length)%pal.length]);
+    const t = map(x+y,0,width+height,0,1);
+    return lerpColor(c, color(255), 0.08*t);
+  }
+  function stylishCell(x,y,w,h,depth){
+    const base = pickColor(depth,x,y);
+    const accent = lerpColor(base,color(255),.22);
+    let rad = min(min(w,h)*.18, 24 - depth*2); rad=max(0,rad);
+
+    // drop shadow
+    noStroke(); fill(0,32); rect(x+3,y+3,w,h,rad);
+    // base
+    fill(red(base),green(base),blue(base),180); rect(x,y,w,h,rad);
+    // inner glow
+    let pad=max(1,min(w,h)*0.02);
+    fill(red(accent),green(accent),blue(accent),40);
+    rect(x+pad,y+pad,w-2*pad,h-2*pad,max(0,rad - pad*0.6));
+    // neon
+    neonRect(x,y,w,h,rad,lerpColor(base,color(255),.35),3);
+    // scan line
+    noStroke();
+    const yy = y + h * (0.15 + 0.1 * noise(x*0.02, y*0.02, frameCount*0.01));
+    fill(red(accent),green(accent),blue(accent),18); rect(x+2,yy,w-4,2);
+  }
+  function divideRect(x,y,w,h,depth){
+    stylishCell(x,y,w,h,depth);
+    if(depth<=0 || w<minSize || h<minSize) return;
+
+    const n = noise(x*.004,y*.004,frameCount*.01 + mode*10);
+    const doQuad = (mode===2) && (n>0.68);
+    if(doQuad){
+      const rw=chooseRatio(x,y,true), rh=chooseRatio(x,y,false);
+      const w2=w*rw, h2=h*rh;
+      divideRect(x,     y,     w2,     h2,     depth-1);
+      divideRect(x+w2,  y,     w-w2,   h2,     depth-1);
+      divideRect(x,     y+h2,  w2,     h-h2,   depth-1);
+      divideRect(x+w2,  y+h2,  w-w2,   h-h2,   depth-1);
+    }else{
+      const vertical = (mode===0) ? (w>h) : (n>0.5);
+      const r=chooseRatio(x,y,vertical);
+      if(vertical){
+        const w2=w*r;
+        divideRect(x,y,w2,h,depth-1);
+        divideRect(x+w2,y,w-w2,h,depth-1);
+      }else{
+        const h2=h*r;
+        divideRect(x,y,w,h2,depth-1);
+        divideRect(x,y+h2,w,h-h2,depth-1);
+      }
+    }
+  }
+
+  return {
+    init(){ randomSeed(seed); noiseSeed(seed); },
+    reset(){ seed = (seed*1664525+1013904223)>>>0; randomSeed(seed); noiseSeed(seed); pal = pick(palettes); },
+    update(dt){
+      if(autoAnim){
+        const t = millis()*0.0004, wave=0.5+0.5*sin(TWO_PI*t);
+        this.d = int(map(wave,0,1,1,max(1,maxDepth)));
+      }else this.d = maxDepth;
+    },
+    draw(){
+      vignette();
+      divideRect(0,0,width,height,this.d||maxDepth);
+      // HUD
+      noStroke(); fill(255,200); textSize(14);
+      text(`Depth: ${this.d||maxDepth}   Mode: ${["Binary","Golden+Noise","Quad MIX"][mode]}`,12,20);
+      text("Keys: [ ] depth / M mode / R reseed", 12, 40);
+    },
+    keyPressed(k){
+      if(k==='[') maxDepth=max(1,maxDepth-1);
+      if(k===']') maxDepth=min(14,maxDepth+1);
+      if(k==='m'||k==='M') mode=(mode+1)%3;
+      if(k==='r'||k==='R') this.reset();
+    }
+  };
+}
+
+/* ======================= 2) MergeSort ========================= */
+function sceneMergeSort(){
+  const N=64; let A=[], ops=[], idx=0, tAcc=0, stepTime=0.03;
+  function gen(){
+    A = Array.from({length:N}, ()=>random());
+    ops=[]; idx=0;
+    function mergeSort(arr, l, r){
+      if(r-l<=1) return;
+      const m = (l+r>>1);
+      mergeSort(arr,l,m); mergeSort(arr,m,r);
+      const tmp=[];
+      let i=l,j=m;
+      while(i<m||j<r){
+        ops.push({type:"compare", i, j});
+        if(j>=r || (i<m && arr[i]<=arr[j])){
+          tmp.push(arr[i]); ops.push({type:"write", pos:l+tmp.length-1, val:arr[i]}); i++;
+        }else{
+          tmp.push(arr[j]); ops.push({type:"write", pos:l+tmp.length-1, val:arr[j]}); j++;
+        }
+      }
+      for(let k=0;k<tmp.length;k++) arr[l+k]=tmp[k];
+    }
+    mergeSort(A.slice(),0,N); // use copy to record ops without altering A yet
+    // reset to unsorted so writes animate to sorted state
+    A = Array.from({length:N}, ()=>random());
+  }
+  function step(){
+    if(idx>=ops.length) return;
+    const op=ops[idx++];
+    if(op.type==="write"){ A[op.pos]=op.val; }
+  }
+  return {
+    init(){ gen(); },
+    reset(){ gen(); },
+    update(dt){ tAcc+=dt; while(tAcc>stepTime){ tAcc-=stepTime; step(); } },
+    draw(){
+      const w=width/N;
+      for(let i=0;i<N;i++){
+        const h=A[i]* (height*0.8), x=i*w, y=height - h;
+        noStroke();
+        const col = color("#00D1FF");
+        fill(red(col),green(col),blue(col),200);
+        rect(x,y,w-1,h,3);
+      }
+      // highlight last op
+      if(idx>0 && idx<=ops.length){
+        const op=ops[idx-1];
+        if(op.type==="compare"){
+          const i=op.i, j=op.j;
+          stroke("#F72585"); strokeWeight(2);
+          const xi=i*w+w/2, xj=j*w+w/2;
+          line(xi, height*0.1, xi, height*0.9);
+          line(xj, height*0.1, xj, height*0.9);
+        }else if(op.type==="write"){
+          const x=op.pos*w, h=op.val*(height*0.8), y=height-h;
+          noFill(); stroke("#FFD23F"); strokeWeight(3);
+          rect(x,y,w-1,h,4);
+        }
+      }
+      fill(255,210); noStroke(); textSize(14);
+      text(`Writes: ${ops.filter(o=>o.type==="write").length} / Steps: ${idx}/${ops.length}`, 12, 20);
+    }
+  };
+}
+
+/* ======================= 3) Dijkstra ========================= */
+function sceneDijkstra(){
+  const N=14; let nodes=[], edges=[], dist=[], used=[], cur=-1, src=0;
+  let stepState="pick"; // "pick" → "relax"
+  function build(){
+    nodes = Array.from({length:N}, (_,i)=>({x: 80+random(width-160), y: 80+random(height-160)}));
+    edges=[];
+    for(let i=0;i<N;i++) for(let j=i+1;j<N;j++){
+      const d = dist2(nodes[i],nodes[j]);
+      if(d < 220*220 && random() < 0.25){
+        const w = sqrt(d) + random(10,60);
+        edges.push({u:i,v:j,w});
+      }
+    }
+    // ensure connectivity (link k to k+1)
+    for(let k=0;k<N-1;k++){
+      const d = sqrt(dist2(nodes[k],nodes[k+1])) + random(10,60);
+      edges.push({u:k,v:k+1,w:d});
+    }
+    dist = Array(N).fill(Infinity); used = Array(N).fill(false);
+    dist[src]=0; cur=-1; stepState="pick";
+  }
+  function dist2(a,b){const dx=a.x-b.x, dy=a.y-b.y; return dx*dx+dy*dy;}
+  function step(){
+    if(stepState==="pick"){
+      let best=-1, bestD=Infinity;
+      for(let i=0;i<N;i++) if(!used[i] && dist[i]<bestD){ bestD=dist[i]; best=i; }
+      cur = best; if(cur==-1){ stepState="done"; return; }
+      used[cur]=true; stepState="relax";
+    }else if(stepState==="relax"){
+      for(const e of edges){
+        const {u,v,w} = e;
+        if(u===cur && !used[v] && dist[u]+w<dist[v]) dist[v]=dist[u]+w;
+        if(v===cur && !used[u] && dist[v]+w<dist[u]) dist[u]=dist[v]+w;
+      }
+      stepState="pick";
+    }
+  }
+  let tAcc=0, stepTime=0.35;
+  return {
+    init(){ build(); },
+    reset(){ build(); },
+    update(dt){ tAcc+=dt; while(tAcc>stepTime){ tAcc-=stepTime; step(); } },
+    draw(){
+      // edges
+      for(const e of edges){
+        const a=nodes[e.u], b=nodes[e.v];
+        const active = (e.u===cur || e.v===cur) && !used[e.u] && !used[e.v];
+        stroke(active ? "#F72585" : "rgba(255,255,255,0.08)");
+        strokeWeight(active ? 2.5 : 1.2);
+        line(a.x,a.y,b.x,b.y);
+      }
+      // nodes
+      textAlign(CENTER,CENTER); textSize(12);
+      for(let i=0;i<N;i++){
+        const n=nodes[i];
+        const c = used[i] ? "#34EB8F" : (i===cur?"#00D1FF":"#213040");
+        fill(c); noStroke(); circle(n.x,n.y,16);
+        fill("#d2deea"); noStroke();
+        const dStr = isFinite(dist[i]) ? dist[i].toFixed(0) : "∞";
+        text(dStr, n.x, n.y-18);
+      }
+      // legend tags
+      const L=document.getElementById('legend');
+      L.innerHTML = `<span class="tag t-visit">探索中</span><span class="tag t-done">確定</span><span class="tag t-edge">緩和候補</span>`;
+    }
+  };
+}
+
+/* ======================= 4) Kruskal (MST) ==================== */
+function sceneKruskal(){
+  const N=18; let nodes=[], edges=[], idx=0, uf=[], mst=[];
+  function build(){
+    nodes = Array.from({length:N}, ()=>({x: 60+random(width-120), y: 60+random(height-120)}));
+    edges=[];
+    for(let i=0;i<N;i++) for(let j=i+1;j<N;j++){
+      const dx=nodes[i].x-nodes[j].x, dy=nodes[i].y-nodes[j].y;
+      const w = sqrt(dx*dx+dy*dy)+random(0,40);
+      if(w < 260) edges.push({u:i,v:j,w});
+    }
+    edges.sort((a,b)=>a.w-b.w);
+    uf = Array(N).fill(0).map((_,i)=>i); idx=0; mst=[];
+  }
+  function find(x){ return uf[x]==x?x:(uf[x]=find(uf[x])); }
+  function uni(a,b){ a=find(a); b=find(b); if(a!=b) uf[a]=b; }
+  let tAcc=0, stepTime=0.35;
+  function step(){
+    if(idx>=edges.length) return;
+    const e=edges[idx++]; const a=find(e.u), b=find(e.v);
+    if(a!=b){ uni(a,b); mst.push(e); }
+  }
+  return {
+    init(){ build(); },
+    reset(){ build(); },
+    update(dt){ tAcc+=dt; while(tAcc>stepTime){ tAcc-=stepTime; step(); } },
+    draw(){
+      // draw all edges faint
+      for(const e of edges){
+        const a=nodes[e.u], b=nodes[e.v];
+        stroke("rgba(255,255,255,0.06)"); strokeWeight(1); line(a.x,a.y,b.x,b.y);
+      }
+      // current edge highlight
+      if(idx<edges.length){
+        const e=edges[idx]; const a=nodes[e.u], b=nodes[e.v];
+        stroke("#F72585"); strokeWeight(3); line(a.x,a.y,b.x,b.y);
+      }
+      // mst edges
+      for(const e of mst){
+        const a=nodes[e.u], b=nodes[e.v];
+        stroke("#34EB8F"); strokeWeight(3.5); line(a.x,a.y,b.x,b.y);
+      }
+      // nodes
+      noStroke(); for(const n of nodes){ fill("#233146"); circle(n.x,n.y,14); }
+    }
+  };
+}
+
+/* ======================= 5) KMP ============================== */
+function sceneKMP(){
+  const textStr = "ABABABAABABACABAABABACABAABABACABA";
+  const patStr  = "ABABACABA";
+  let i=0,j=0, pi=[], hits=[];
+  function build(){
+    // prefix function
+    const m=patStr.length; pi=Array(m).fill(0);
+    for(let a=1;a<m;a++){
+      let k=pi[a-1];
+      while(k>0 && patStr[a]!==patStr[k]) k=pi[k-1];
+      if(patStr[a]===patStr[k]) k++;
+      pi[a]=k;
+    }
+    i=0;j=0; hits=[];
+  }
+  let tAcc=0, stepTime=0.35;
+  function step(){
+    if(i>=textStr.length) return;
+    if(textStr[i]===patStr[j]){ i++; j++; if(j===patStr.length){ hits.push(i-j); j=pi[j-1]; } }
+    else{ if(j>0) j=pi[j-1]; else i++; }
+  }
+  return {
+    init(){ build(); },
+    reset(){ build(); },
+    update(dt){ tAcc+=dt; while(tAcc>stepTime){ tAcc-=stepTime; step(); } },
+    draw(){
+      textAlign(LEFT,TOP); textSize(20);
+      // text
+      let x=40,y=120; noStroke();
+      for(let k=0;k<textStr.length;k++){
+        const c = (k===i) ? "#00D1FF" : "#e6edf3";
+        fill(c); text(textStr[k], x+k*18, y);
+      }
+      // pattern
+      y+=30;
+      for(let k=0;k<patStr.length;k++){
+        const c = (k===j) ? "#FFD23F" : "#bcd1e6";
+        fill(c); text(patStr[k], x+k*18 + (i-j)*18, y);
+      }
+      // pi array
+      y+=32; textSize(14); fill("#9fb3c7");
+      text("π: " + pi.join(" "), x, y);
+      // hits
+      y+=24; fill("#34EB8F");
+      text("Hits at: " + (hits.length?hits.join(", "):"—"), x, y);
+    }
+  };
+}
+
+/* ======================= 6) FFT ============================== */
+function sceneFFT(){
+  const N=32; let x=[], stages=[], stage=0; let tAcc=0, stepTime=0.6;
+  function genSignal(){
+    x = Array.from({length:N}, (_,n)=> 0.7*Math.sin(2*PI*n/N*3) + 0.4*Math.cos(2*PI*n/N*6) + random(-0.1,0.1) );
+  }
+  function bitrev(i,bits){ let r=0; for(let k=0;k<bits;k++){ r=(r<<1)|((i>>k)&1); } return r; }
+  function build(){
+    genSignal();
+    // iterative radix-2, store arrays per stage
+    const bits = Math.log2(N);
+    let a = Array.from({length:N}, (_,i)=>({re:x[bitrev(i,bits)], im:0}));
+    stages=[a.map(c=>({...c}))];
+    for(let s=1, m=2; m<=N; s++, m<<=1){
+      const wm = {re:Math.cos(-2*Math.PI/m), im:Math.sin(-2*Math.PI/m)};
+      for(let k=0;k<N;k+=m){
+        let w={re:1,im:0};
+        for(let j=0;j<m/2;j++){
+          const t = mul(w, a[k+j+m/2]);
+          const u = a[k+j];
+          a[k+j]       = {re:u.re+t.re, im:u.im+t.im};
+          a[k+j+m/2]   = {re:u.re-t.re, im:u.im-t.im};
+          w = mul(w, wm);
+        }
+      }
+      stages.push(a.map(c=>({...c})));
+    }
+    stage=0;
+  }
+  function mul(a,b){ return {re:a.re*b.re - a.im*b.im, im:a.re*b.im + a.im*b.re}; }
+  function step(){ if(stage<stages.length-1) stage++; }
+  return {
+    init(){ build(); },
+    reset(){ build(); },
+    update(dt){ tAcc+=dt; while(tAcc>stepTime){ tAcc-=stepTime; step(); } },
+    draw(){
+      const arr = stages[stage];
+      const mags = arr.map(c=>Math.hypot(c.re, c.im));
+      const maxM = Math.max(1e-6, ...mags);
+      const w=width/N;
+      for(let i=0;i<N;i++){
+        const h = (mags[i]/maxM) * (height*0.7);
+        const x=i*w, y=height-30 - h;
+        noStroke(); fill(0,209,255,200); rect(x,y,w-2,h,3);
+      }
+      fill("#e6edf3"); textSize(14); noStroke();
+      text(`Stage ${stage}/${stages.length-1}`, 12, 20);
+      text("Butterfly stages of radix-2 FFT (magnitude view)", 12, 40);
+    }
+  };
+}
+
+/* ======================= 7) Game of Life ===================== */
+function sceneLife(){
+  const COLS=96, ROWS=54; let grid=[], tAcc=0, stepTime=0.12;
+  function build(){
+    grid = Array.from({length:ROWS}, ()=> Array.from({length:COLS}, ()=> random()<0.18 ? 1:0));
+  }
+  function neighbors(r,c){
+    let s=0;
+    for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){
+      if(dr===0&&dc===0) continue;
+      const rr=(r+dr+ROWS)%ROWS, cc=(c+dc+COLS)%COLS; s+=grid[rr][cc];
+    }
+    return s;
+  }
+  function step(){
+    const next = grid.map(row=>row.slice());
+    for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+      const n=neighbors(r,c);
+      if(grid[r][c]) next[r][c] = (n===2||n===3)?1:0;
+      else next[r][c] = (n===3)?1:0;
+    }
+    grid=next;
+  }
+  return {
+    init(){ build(); },
+    reset(){ build(); },
+    update(dt){ tAcc+=dt; while(tAcc>stepTime){ tAcc-=stepTime; step(); } },
+    draw(){
+      const cw=width/COLS, ch=height/ROWS;
+      noStroke();
+      for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+        if(grid[r][c]){
+          fill(20,255,200,220);
+          rect(c*cw, r*ch, cw-0.5, ch-0.5, 2);
+        }
+      }
+      // grid faint
+      stroke(255,12); strokeWeight(1);
+      for(let x=0;x<=width;x+=cw) line(x,0,x,height);
+      for(let y=0;y<=height;y+=ch) line(0,y,width,y);
+    },
+    mousePressed(){
+      const cw=width/COLS, ch=height/ROWS;
+      const c=floor(mouseX/cw), r=floor(mouseY/ch);
+      if(r>=0&&r<ROWS&&c>=0&&c<COLS) grid[r][c]^=1;
+    },
+    keyPressed(k){ if(k==='r'||k==='R') this.reset(); }
+  };
+}
+
+/* ===================== Global Key routing ===================== */
+function keyPressed(){
+  if(scene && scene.keyPressed) scene.keyPressed(key);
+}
+function mousePressed(){
+  if(scene && scene.mousePressed) scene.mousePressed();
+}
+</script>
+</body>
+</html>
