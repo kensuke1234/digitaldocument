@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://niemewebsite-o9l8.vercel.app
+
+# Sitemaps
+Sitemap: https://niemewebsite-o9l8.vercel.app/sitemap.xml
