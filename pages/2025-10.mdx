@@ -1,6 +1,6 @@
 ---
-title: 2025年9月
-description: 2025年9月の日記
+title: 2025年10月
+description: 2025年10月の日記
 ---
 
 # 2025年10月
@@ -31,32 +31,3 @@ description: 2025年9月の日記
 
 
 ---
-## 機械学習
----
-
-機械学習モデルでのいくつか順序がわかるように記載。 ◼️①Get Data-2.ipynb Yahoofinanceから日付の日の3000社分の画像取得して 「charts_30m_2025-10-28」フォルダなどになる。画像は翌日でも取得可能。 ◼️②build_prices_daily.py build_prices_daily.pyで3000社近くの企業の該当範囲の 株価の終値を取得する。build_prices_daily.pyはsystem_trade-master配下のフォルダ全ての差分を取得して、prices_dailyに反映する。 python build_prices_daily.py
---images_root /Users/kensukemachii/Desktop/system_trade-master
---start 2025-07-01
---end 2025-10-30
---out_csv /Users/kensukemachii/Desktop/system_trade-master/prices_daily.csv ◼️③label_next_day.pyで、images_dirは、system_trade-masterのことで、その配下のフォルダのファイル名をprices_daily.csvと比較して、終値で5クラスに分類する。 OUT=/Users/kensukemachii/Desktop/labeled_output_5cls_10pct rm -rf "$OUT" python /Users/kensukemachii/Desktop/system_trade-master/label_next_day.py
---images_dir /Users/kensukemachii/Desktop/system_trade-master
---prices_csv /Users/kensukemachii/Desktop/system_trade-master/prices_daily.csv
---out_dir "$OUT"
---filename_pattern "{ticker}_{date}30m"
---date_fmt "%Y-%m-%d"
---scheme five
---t_up_small 0.02 --t_up_big 0.10
---t_dn_small -0.02 --t_dn_big -0.10
---symlink
---dry_run ◼️python flatten_to_class.py system_trade-masterに移動して、実行。DOWN,UPフォルダなどの配下の企業名フォルダを抜かして、画像のみにする。 python flatten_to_class.py --root "/Users/kensukemachii/Desktop/SBIPortfolio1119Split/five" ◼️④python3 label_next_day.py 翌日株価で画像をラベリングするUPBIGやDOWNなどラベリングをするスクリプト。「今日のチャート画像 → 翌日が UP_BIG / DOWN_BIG / NEUTRAL か？」を 自動判定してフォルダ分け（ラベリング）します。 python label_next_day.py
---images_dir "/Users/kensukemachii/Desktop/system_trade-master/chart"
---prices_csv "/Users/kensukemachii/Desktop/system_trade-master/prices_daily.csv"
---out_dir "/Users/kensukemachii/Desktop/system_trade-master/labeled_output"
---filename_pattern "{ticker}{date}_30m"
---date_fmt "%Y-%m-%d"
---scheme five
---t_up_small 0.004 --t_up_big 0.07
---t_dn_small -0.004 --t_dn_big -0.07 ◼️⑤split_dataset_5cls.py ラベル済みのフォルダをtrain,valid,testに分ける最終のスクリプト。 ◼️⑥evaluate_classwise_accuracy.py prices_daily.csvで実際の価格変化、redictions_5Classbest_best_baseline.csvの各モデルの各企業に対する予測(UPBIG,UP,DOWN...etc)を突き合わせて、モデルの予測精度を比較する。 ◼️⑦evaluate_classwise_accuracy.py prices_daily.csvで実際の価格変化を見て、予測モデルの各クラスの精度を検証する。
-
----
-
