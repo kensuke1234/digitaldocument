@@ -1,0 +1,429 @@
+:root {
+  --journal-paper: #060b18;
+  --journal-paper-deep: #111a36;
+  --journal-ink: #eef8ff;
+  --journal-muted: #a5b8d3;
+  --journal-accent: #63e7ff;
+  --journal-accent-secondary: #b58cff;
+  --journal-line: rgba(116, 224, 255, 0.2);
+  --journal-card: rgba(8, 18, 42, 0.58);
+  --nextra-bg: 6, 11, 24;
+  --nextra-navbar-height: 88px;
+  --journal-pad-x: clamp(1.25rem, 5vw, 4rem);
+  --journal-section-gap: clamp(5rem, 12vw, 8rem);
+  color-scheme: dark;
+}
+
+html {
+  background: #060b18;
+  scroll-behavior: smooth;
+}
+
+body {
+  background:
+    linear-gradient(rgba(102, 224, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(102, 224, 255, 0.035) 1px, transparent 1px),
+    radial-gradient(circle at 12% 86%, rgba(50, 213, 255, 0.22), transparent 28rem),
+    radial-gradient(circle at 86% 12%, rgba(188, 100, 255, 0.24), transparent 30rem),
+    linear-gradient(to top right, #040814 0%, #09203a 38%, #24204e 69%, #501f6c 100%);
+  background-attachment: fixed;
+  background-size: 48px 48px, 48px 48px, auto, auto, auto;
+  color: var(--journal-ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", Meiryo, sans-serif;
+  font-feature-settings: "palt" 1;
+  letter-spacing: 0.018em;
+  min-height: 100vh;
+}
+
+.dark body {
+  --journal-card: rgba(5, 13, 32, 0.67);
+  background:
+    linear-gradient(rgba(102, 224, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(102, 224, 255, 0.035) 1px, transparent 1px),
+    radial-gradient(circle at 12% 86%, rgba(50, 213, 255, 0.22), transparent 28rem),
+    radial-gradient(circle at 86% 12%, rgba(188, 100, 255, 0.24), transparent 30rem),
+    linear-gradient(to top right, #030611 0%, #071a31 38%, #1d1942 69%, #401857 100%);
+  background-attachment: fixed;
+  background-size: 48px 48px, 48px 48px, auto, auto, auto;
+}
+
+::selection {
+  background: rgba(99, 231, 255, 0.3);
+}
+
+.nextra-nav-container,
+footer {
+  background: rgba(4, 9, 23, 0.62) !important;
+  backdrop-filter: blur(18px);
+}
+
+.nextra-sidebar-container {
+  background: linear-gradient(
+    145deg,
+    rgba(37, 194, 116, 0.2),
+    rgba(13, 92, 70, 0.12)
+  ) !important;
+  border-right: 1px solid rgba(116, 255, 177, 0.16);
+  backdrop-filter: blur(18px) saturate(125%);
+}
+
+.nextra-nav-container {
+  border-bottom: 1px solid rgba(116, 224, 255, 0.12);
+}
+
+.nextra-nav-container nav {
+  padding-left: var(--journal-pad-x);
+  padding-right: var(--journal-pad-x);
+}
+
+.nextra-breadcrumb,
+.nextra-toc {
+  color: var(--journal-muted) !important;
+}
+
+input[type="search"] {
+  background: rgba(5, 14, 34, 0.72) !important;
+  border: 1px solid var(--journal-line) !important;
+  color: var(--journal-ink) !important;
+}
+
+input[type="search"]::placeholder {
+  color: var(--journal-muted) !important;
+}
+
+.site-logo {
+  align-items: center;
+  display: inline-flex;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.86rem;
+  font-weight: 700;
+  gap: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.site-logo__mark {
+  background: linear-gradient(135deg, var(--journal-accent), var(--journal-accent-secondary));
+  border-radius: 50%;
+  box-shadow: 0 0 0 5px rgba(99, 231, 255, 0.1), 0 0 18px rgba(99, 231, 255, 0.72);
+  height: 0.55rem;
+  width: 0.55rem;
+}
+
+.site-footer {
+  color: var(--journal-muted);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+}
+
+article.nextra-content {
+  max-width: none;
+}
+
+.nextra-content main {
+  color: var(--journal-ink);
+  max-width: 80rem;
+  padding-left: var(--journal-pad-x);
+  padding-right: var(--journal-pad-x);
+}
+
+.nextra-content h1,
+.nextra-content h2,
+.nextra-content h3 {
+  color: var(--journal-ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic UI", sans-serif;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 26px rgba(99, 231, 255, 0.1);
+}
+
+.nextra-content h1 {
+  font-size: clamp(2.1rem, 6vw, 3.65rem);
+  line-height: 1.16;
+  margin-bottom: 2.4rem;
+}
+
+.nextra-content h2 {
+  border-bottom: 1px solid var(--journal-line);
+  font-size: clamp(1.35rem, 3.3vw, 1.75rem);
+  margin-top: 4.75rem;
+  padding-bottom: 0.7rem;
+}
+
+.nextra-content p,
+.nextra-content li {
+  font-size: 1.02rem;
+  line-height: 2.18;
+}
+
+.nextra-content p {
+  margin-top: 2.2rem;
+  max-width: 42rem;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.nextra-content .diary-month-label {
+  color: var(--journal-accent);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  margin: -1.5rem 0 3.4rem;
+  text-shadow: 0 0 16px rgba(99, 231, 255, 0.45);
+}
+
+.diary-month-label ~ :where(p, ul, ol, blockquote) {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  margin-bottom: 0;
+  padding-top: 0;
+  text-wrap: pretty;
+}
+
+.diary-month-label ~ :where(p, ul, ol, blockquote) + :where(p, ul, ol, blockquote) {
+  margin-top: 2.2rem;
+}
+
+.nextra-content li + li {
+  margin-top: 0.65rem;
+}
+
+.nextra-content hr {
+  border-color: var(--journal-line);
+  margin: 4rem auto;
+  max-width: 7rem;
+}
+
+.home-hero {
+  border-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin: 0;
+  min-height: calc(100vh - var(--nextra-navbar-height));
+  padding: clamp(4rem, 9vw, 8rem) 0 var(--journal-section-gap);
+  position: relative;
+}
+
+.home-hero::after {
+  background: linear-gradient(90deg, var(--journal-accent), var(--journal-accent-secondary));
+  bottom: 0;
+  content: "";
+  height: 1px;
+  left: 0;
+  opacity: 0.8;
+  position: absolute;
+  right: 0;
+}
+
+.home-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.home-hero .home-hero__eyebrow {
+  color: var(--journal-accent);
+  font-size: 0.72rem;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  margin: 0 0 clamp(2rem, 5vw, 4rem);
+}
+
+.home-hero h1 {
+  font-family: "Helvetica Neue", Arial, "Hiragino Sans", sans-serif;
+  font-size: clamp(3.75rem, 11.5vw, 11rem);
+  font-weight: 700;
+  letter-spacing: -0.065em;
+  line-height: 0.86;
+  margin: 0;
+  max-width: none;
+  overflow-wrap: normal;
+  text-shadow: 0 0 70px rgba(99, 231, 255, 0.12);
+}
+
+.home-hero h1 span {
+  display: block;
+}
+
+.home-hero__statement {
+  font-size: clamp(1.45rem, 3vw, 2.5rem);
+  margin-top: clamp(3rem, 7vw, 5rem);
+  max-width: 25em;
+}
+
+.home-hero__statement p {
+  font-size: inherit;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.65;
+  margin: 0;
+  max-width: none;
+}
+
+.home-hero__statement p + p {
+  margin-top: 2rem;
+}
+
+.home-hero__statement-en {
+  color: var(--journal-muted);
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-size: 0.82rem;
+  line-height: 1.7;
+  margin-top: 2rem;
+  max-width: 42rem;
+}
+
+.home-hero__statement-en p {
+  font-size: inherit;
+  line-height: inherit;
+  margin: 0;
+  max-width: none;
+}
+
+.home-hero__statement-en p + p {
+  margin-top: 0.75rem;
+}
+
+.home-hero__button {
+  align-items: center;
+  background: linear-gradient(105deg, var(--journal-accent), var(--journal-accent-secondary));
+  border-radius: 999px;
+  box-shadow: 0 12px 34px rgba(74, 94, 255, 0.22), 0 0 24px rgba(99, 231, 255, 0.15);
+  color: #061020 !important;
+  display: inline-flex;
+  font-size: 0.9rem;
+  font-weight: 700;
+  gap: 1.1rem;
+  margin-top: 3rem;
+  padding: 0.8rem 1.25rem;
+  text-decoration: none !important;
+  transition: gap 180ms ease, transform 180ms ease;
+}
+
+.home-hero__button:hover {
+  gap: 1.4rem;
+  transform: translateY(-2px);
+}
+
+.month-grid {
+  display: grid;
+  border-left: 1px solid var(--journal-line);
+  border-top: 1px solid var(--journal-line);
+  gap: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 2rem;
+}
+
+.month-grid a {
+  background: rgba(6, 14, 34, 0.22);
+  border: 0;
+  border-bottom: 1px solid var(--journal-line);
+  border-right: 1px solid var(--journal-line);
+  border-radius: 0;
+  color: var(--journal-ink) !important;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  min-height: 10.5rem;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  text-decoration: none !important;
+  transition: border-color 180ms ease, transform 180ms ease;
+}
+
+.month-grid a:hover {
+  border-color: rgba(99, 231, 255, 0.6);
+  box-shadow: 0 16px 38px rgba(2, 7, 21, 0.24), 0 0 24px rgba(99, 231, 255, 0.08);
+  transform: translateY(-2px);
+}
+
+.month-grid span {
+  color: var(--journal-accent);
+  font-family: Georgia, serif;
+  font-size: 0.75rem;
+  grid-row: span 2;
+  margin-right: 0.8rem;
+  padding-top: 0.2rem;
+}
+
+.month-grid strong {
+  font-family: "Helvetica Neue", Arial, "Hiragino Sans", sans-serif;
+  font-size: clamp(1.35rem, 2.5vw, 2rem);
+  letter-spacing: -0.02em;
+}
+
+.month-grid small {
+  color: var(--journal-muted);
+  font-size: 0.74rem;
+  line-height: 1.5;
+  margin-top: 0.25rem;
+}
+
+.nextra-content .archive-link {
+  color: var(--journal-muted);
+  font-size: 0.82rem;
+  margin-top: 1.5rem;
+}
+
+.archive-heading {
+  align-items: baseline;
+  border-bottom: 1px solid var(--journal-line);
+  display: flex;
+  gap: 1rem;
+  margin-top: var(--journal-section-gap);
+  padding-bottom: 1rem;
+}
+
+.archive-heading h2 {
+  border: 0;
+  font-size: clamp(1.55rem, 3vw, 2.5rem);
+  margin: 0;
+  padding: 0;
+}
+
+.archive-heading span {
+  color: var(--journal-muted);
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 640px) {
+  .nextra-content p,
+  .nextra-content li {
+    font-size: 1rem;
+    line-height: 2.05;
+  }
+
+  .month-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .home-hero {
+    min-height: auto;
+  }
+
+  .home-hero h1 {
+    font-size: clamp(3.2rem, 16vw, 5rem);
+    letter-spacing: -0.055em;
+    line-height: 0.9;
+  }
+
+  .home-hero h1 span:last-child {
+    font-size: 0.76em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .home-hero__button,
+  .month-grid a {
+    transition: none;
+  }
+}
